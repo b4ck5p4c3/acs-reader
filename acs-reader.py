@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from cmath import exp
-from os import environ
+import signal
+from os import environ, kill, getpid
 from collections import namedtuple
 from dotenv import load_dotenv
 
@@ -186,11 +186,13 @@ def parse_config():
 
 def mqtt_on_connect(client, userdata, flags, rc):
     if rc != 0:
-        raise Exception("MQTT connection failed with status code " + str(rc))
-    print("MQTT connected")
+        print("MQTT connection failed with status code " + str(rc))
+        # Dirty way, as client.loop_stop isn't working for some reason
+        kill(getpid(), signal.SIGINT)
+    else:
+        print("MQTT connected")
 
 def listen(config):
-
     client = mqtt_client.Client(config.client_id)
 
     if config.user and config.password: 
@@ -206,7 +208,6 @@ def listen(config):
     pan_topic = config.topic + "/" + "pan"
     uid_topic = config.topic + "/" + "uid"
 
-    print("Started listening")
     try:
         with nfc.ContactlessFrontend(config.device) as clf:
             while True:
