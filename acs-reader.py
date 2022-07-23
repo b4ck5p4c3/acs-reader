@@ -173,14 +173,14 @@ def get_pan(tag):
 Config = namedtuple('Config', ('device', 'host', 'port', 'user', 'password', 'topic', 'client_id', 'ca_certs'))
 
 def parse_config():
-    device = environ.get('DEVICE', 'tty:USB0:pn532')
-    host = environ.get('HOST', '127.0.0.1')
-    port = environ.get('PORT', '1883')
-    user = environ.get('USER')
-    password = environ.get('PASSWORD')
-    topic = environ.get('TOPIC_PREFIX', 'bus/devices/acs-reader')
-    client_id = environ.get('CLIENT_ID', 'acs-reader')
-    ca_certs = environ.get('CA_FILE')
+    device = environ.get('NFC_DEVICE', 'tty:USB0:pn532')
+    host = environ.get('MQTT_HOST', '127.0.0.1')
+    port = environ.get('MQTT_PORT', '1883')
+    user = environ.get('MQTT_USER')
+    password = environ.get('MQTT_PASSWORD')
+    topic = environ.get('MQTT_TOPIC_PREFIX', 'bus/devices/acs-reader')
+    client_id = environ.get('MQTT_CLIENT_ID', 'acs-reader')
+    ca_certs = environ.get('MQTT_CA_FILE')
     return Config(device, host, int(port), user, password, topic, client_id, ca_certs)
 
 def listen(config):
