@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from cmath import exp
 from os import environ
 from collections import namedtuple
 from dotenv import load_dotenv
@@ -183,6 +184,11 @@ def parse_config():
     ca_certs = environ.get('MQTT_CA_FILE')
     return Config(device, host, int(port), user, password, topic, client_id, ca_certs)
 
+def mqtt_on_connect(client, userdata, flags, rc):
+    if rc != 0:
+        raise Exception("MQTT connection failed with status code " + str(rc))
+    print("MQTT connected")
+
 def listen(config):
 
     client = mqtt_client.Client(config.client_id)
@@ -193,6 +199,7 @@ def listen(config):
     if config.ca_certs:
         client.tls_set(ca_certs=config.ca_certs)
 
+    client.on_connect = mqtt_on_connect
     client.connect(config.host, config.port)
     client.loop_start()
 
