@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import json
 
+from os import environ
 from collections import namedtuple
+from dotenv import load_dotenv
 
 import nfc
 import nfc.clf
@@ -40,7 +41,6 @@ class Record:
 
 def parse_tlv(data):
     parsed = tlv.Tlv.parse(data)
-    #print(parsed)
     return Record(parsed[0])
 
 def select_ppse(tag):
@@ -170,25 +170,30 @@ def get_pan(tag):
 
     return is_payment, pan
 
-Config = namedtuple('Config', ('device', 'broker', 'port', 'user', 'password', 'topic'))
+Config = namedtuple('Config', ('device', 'host', 'port', 'user', 'password', 'topic', 'client_id', 'ca_certs'))
 
-def parse_config(path):
-    parsed = {}
-    with open(path, 'rt') as f:
-        parsed = json.load(f)
-        device = parsed.get('device', 'tty:USB0:pn532')
-        broker = parsed['broker']
-        port = parsed['port']
-        user = parsed['user']
-        password = parsed['password']
-        topic = parsed['topic']
-    return Config(device, broker, port, user, password, topic)
+def parse_config():
+    device = environ.get('DEVICE', 'tty:USB0:pn532')
+    host = environ.get('HOST', '127.0.0.1')
+    port = environ.get('PORT', '1883')
+    user = environ.get('USER')
+    password = environ.get('PASSWORD')
+    topic = environ.get('TOPIC_PREFIX', 'bus/devices/acs-reader')
+    client_id = environ.get('CLIENT_ID', 'acs-reader')
+    ca_certs = environ.get('CA_FILE')
+    return Config(device, host, int(port), user, password, topic, client_id, ca_certs)
 
 def listen(config):
 
-    client = mqtt_client.Client(f"acs-reader-1")
-    client.username_pw_set(config.user, config.password)
-    client.connect(config.broker, config.port)
+    client = mqtt_client.Client(config.client_id)
+
+    if config.user and config.password: 
+        client.username_pw_set(config.user, config.password)
+
+    if config.ca_certs:
+        client.tls_set(ca_certs=config.ca_certs)
+
+    client.connect(config.host, config.port)
     client.loop_start()
 
     pan_topic = config.topic + "/" + "pan"
@@ -231,4 +236,5 @@ def listen(config):
 
 
 if __name__ == "__main__":
-    listen(parse_config("/etc/acs-reader/config.json"))
+    load_dotenv()
+    listen(parse_config())
