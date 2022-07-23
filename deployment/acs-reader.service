@@ -5,9 +5,10 @@ After=network.target
 [Service]
 Environment=PYTHONUNBUFFERED=1
 Type=simple
-Restart=on-failure
+Restart=always
 User=acs-reader
-ExecStart=/usr/local/bin/acs-reader.py
+WorkingDirectory=/home/acs/app/acs-reader
+ExecStart=/home/acs/app/acs-reader/acs-reader
 
 [Install]
 WantedBy=multi-user.target
