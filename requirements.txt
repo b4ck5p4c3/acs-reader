@@ -1,0 +1,8 @@
+ber-tlv==0.0.6
+libusb1==3.0.0
+ndeflib==0.3.3
+nfcpy==1.0.4
+paho-mqtt==1.6.1
+pyDes==2.0.1
+pyserial==3.5
+python-dotenv==0.20.0

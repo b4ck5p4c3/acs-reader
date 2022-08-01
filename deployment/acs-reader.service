@@ -1,13 +1,16 @@
 [Unit]
 Description=ACS reader
 After=network.target
+StartLimitBurst=20
+StartLimitIntervalSec=5
 
 [Service]
 Environment=PYTHONUNBUFFERED=1
 Type=simple
-Restart=on-failure
+Restart=always
 User=acs-reader
-ExecStart=/usr/local/bin/acs-reader.py
+WorkingDirectory=/home/acs/app/acs-reader
+ExecStart=/home/acs/app/acs-reader/acs-reader.py
 
 [Install]
 WantedBy=multi-user.target
