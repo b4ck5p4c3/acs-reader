@@ -131,7 +131,18 @@ uint8_t readAndClassifyTarget() {
   }
 }
 
-uint8_t readEMVCoPAN() {
+void hexdump(String preamble, uint8_t *buffer, uint16_t size) {
+  Serial.print(preamble + ": ");
+  for (uint16_t i = 0; i < size; i++) {
+    if (buffer[i] < 0x10) {
+      Serial.print('0');
+    }
+    Serial.print(buffer[i], HEX);
+  }
+  Serial.println();
+}
+
+bool emvSelectPPSE(uint8_t *aid) {
   uint8_t berBuffer[255];
   uint8_t berLength = sizeof(berBuffer);
 
@@ -139,23 +150,31 @@ uint8_t readEMVCoPAN() {
   // Header: 0x00 0xA4 0x04 0x00, Data: 2PAY.SYS.DDF01
   uint8_t apdu[] ={0x00, 0xA4, 0x04, 0x00, 0x0e, 0x32, 0x50, 0x41, 0x59, 0x2e, 0x53, 0x59, 0x53, 0x2e, 0x44, 0x44, 0x46, 0x30, 0x31, 0x00};
   if (!nfc.inDataExchange(apdu, sizeof(apdu), berBuffer, &berLength)) {
+    return false
+  }
+
+  // Todo: check that AID is valid
+  memcpy(aid, (berBuffer + 27), sizeof(aid));
+  return true;
+}
+
+bool emvSelectAID(uint8_t *aid, uint8_t *pdol) {
+  return true;
+}
+
+uint8_t readEMVCoPAN() {
+  uint8_t aid[8];
+  uint8_t pdol[256];
+  if (!emvSelectPPSE(aid)) {
     return EMVCO_READ_FAIL;
   }
 
-  Serial.print("BL: ");
-  Serial.println(berLength);
-  Serial.println();
-  Serial.println();
-  for(uint8_t i = 0; i < berLength; i++) {
-    if (berBuffer[i] < 0x10) {
-      Serial.print('0');
-    }
-    Serial.print(berBuffer[i], HEX);
+  hexdump("AID", aid, sizeof(aid));
+  if (!emvSelectAID(aid, pdol)) {
+    return EMVCO_READ_FAIL;
   }
-  Serial.println();
-  Serial.println();
-  return EMVCO_READ_OK;
 
+  return EMVCO_READ_OK;
 }
 
 void loop() {
