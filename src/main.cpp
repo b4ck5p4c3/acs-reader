@@ -1,10 +1,13 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
+#include <rdm6300.h>
 
 #define PN532_IRQ 5
 #define PN532_RST 18 // Must be connected to RSTPDN pin, not RSTO!
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RST);
+Rdm6300 rdm6300;
+TaskHandle_t Core2;
 
 #define RFID_READ_NO_TAG 0x00
 #define RFID_READ_TIMED_OUT 0x01
@@ -31,10 +34,20 @@ uint8_t inlistedTarget = 0;
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t uidLength;
 
+void Core2code( void * pvParameters ){
+  Serial.print("LF Read running on core ");
+  Serial.println(xPortGetCoreID());
+  for(;;){
+  if (rdm6300.get_new_tag_id())
+		Serial.println(rdm6300.get_tag_id(), HEX);
+  }
+}
+
 void setup(void) {
   Serial.begin(115200);
   // Serial2.begin(115200);
-
+  Serial1.begin(RDM6300_BAUDRATE, SERIAL_8N1, 23);  //Bind first hardware serial RX to D23
+	rdm6300.begin(&Serial1);
   Wire.setPins(26, 25);
   nfc.begin();
   
@@ -45,6 +58,15 @@ void setup(void) {
   
   nfc.setPassiveActivationRetries(0xFF);
   nfc.SAMConfig();
+
+  xTaskCreatePinnedToCore(
+                    Core2code,   /* Task function. */
+                    "Core2",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Core2,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 1 */
   
   Serial.println("Ready");
 }
@@ -150,7 +172,7 @@ bool emvSelectPPSE(uint8_t *aid) {
   // Header: 0x00 0xA4 0x04 0x00, Data: 2PAY.SYS.DDF01
   uint8_t apdu[] ={0x00, 0xA4, 0x04, 0x00, 0x0e, 0x32, 0x50, 0x41, 0x59, 0x2e, 0x53, 0x59, 0x53, 0x2e, 0x44, 0x44, 0x46, 0x30, 0x31, 0x00};
   if (!nfc.inDataExchange(apdu, sizeof(apdu), berBuffer, &berLength)) {
-    return false
+    return false;
   }
 
   // Todo: check that AID is valid
