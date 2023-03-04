@@ -1,13 +1,13 @@
-#include <Arduino.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 #include <Wire.h>
 #include <Adafruit_PN532.h>
 #include <rdm6300.h>
 
 #define PN532_IRQ 5
 #define PN532_RST 18 // Must be connected to RSTPDN pin, not RSTO!
-Adafruit_PN532 nfc(PN532_IRQ, PN532_RST);
-Rdm6300 rdm6300;
-TaskHandle_t Core2;
 
 #define RFID_READ_NO_TAG 0x00
 #define RFID_READ_TIMED_OUT 0x01
@@ -30,22 +30,79 @@ TaskHandle_t Core2;
 #define EMVCO_MF_DESFIRE 0x03
 #define EMVCO_MF_CLASSIC_DESFIRE 0x04
 
+// SET ENV VARIABLES
+
+char* WIFI_SSID = WIFI_SSID;
+char* WIFI_PASSWORD = WIFI_PASSWORD;
+char* OTA_HOSTNAME = OTA_HOSTNAME;
+char* OTA_PASSWORD = OTA_PASSWORD;
+uint16_t OTA_PORT = OTA_PORT;
+
+Adafruit_PN532 nfc(PN532_IRQ, PN532_RST);
+Rdm6300 rdm6300;
+TaskHandle_t Core2;
+TimerHandle_t arduinoUpdateTimer;
+TimerHandle_t wifiReconnectTimer;
+
 uint8_t inlistedTarget = 0;
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t uidLength;
 
 void Core2code( void * pvParameters ){
-  Serial.print("LF Read running on core ");
+  Serial.print("125kHz Reader running on core ");
   Serial.println(xPortGetCoreID());
   for(;;){
-  if (rdm6300.get_new_tag_id())
-		Serial.println(rdm6300.get_tag_id(), HEX);
+  if (rdm6300.get_new_tag_id()){
+      uint32_t id_var = rdm6300.get_tag_id();
+      Serial.print("125kHz UID:");
+      Serial.println(id_var, HEX);
+      Serial2.print("EM:");
+      Serial2.println(id_var, HEX);
+    }
   }
+}
+
+
+void connectToWifi() {
+  Serial.println("Connecting to Wi-Fi...");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+}
+
+void getUpdates() {
+  Serial.println("OTA Handle");
+  ArduinoOTA.handle();
+
+  ArduinoOTA.onStart([]() {
+    xTimerStop(arduinoUpdateTimer, 0);
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    xTimerStart(arduinoUpdateTimer, 0);
+});
+}
+
+void WiFiEvent(WiFiEvent_t event) {
+    Serial.printf("[WiFi-event] event: %d\n", event);
+    switch(event) {
+    case SYSTEM_EVENT_STA_GOT_IP:
+        Serial.println("WiFi connected");
+        Serial.println("IP address: ");
+        Serial.println(WiFi.localIP());
+        ArduinoOTA.begin();
+        Serial.println("OTA server has been started");
+        xTimerStart(arduinoUpdateTimer, 0);
+        xTimerStop(wifiReconnectTimer, 0);
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+        Serial.println("WiFi lost connection");
+        xTimerStop(arduinoUpdateTimer, 0);
+        xTimerStart(wifiReconnectTimer, 0);
+        break;
+    }
 }
 
 void setup(void) {
   Serial.begin(115200);
-  // Serial2.begin(115200);
+  Serial2.begin(115200);
   Serial1.begin(RDM6300_BAUDRATE, SERIAL_8N1, 23);  //Bind first hardware serial RX to D23
 	rdm6300.begin(&Serial1);
   Wire.setPins(26, 25);
@@ -59,6 +116,17 @@ void setup(void) {
   nfc.setPassiveActivationRetries(0xFF);
   nfc.SAMConfig();
 
+  WiFi.mode(WIFI_STA);
+  
+  ArduinoOTA.setHostname(OTA_HOSTNAME);
+  ArduinoOTA.setPassword(OTA_PASSWORD);
+  ArduinoOTA.setPort(OTA_PORT);
+
+  arduinoUpdateTimer = xTimerCreate("arduinoOTATimer", pdMS_TO_TICKS(3000), pdMS_TO_TICKS(500), (void*)0, reinterpret_cast<TimerCallbackFunction_t>(getUpdates));
+  wifiReconnectTimer = xTimerCreate("wifiTimer", pdMS_TO_TICKS(2000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToWifi));
+  WiFi.onEvent(WiFiEvent);
+  connectToWifi();
+
   xTaskCreatePinnedToCore(
                     Core2code,   /* Task function. */
                     "Core2",     /* name of task. */
@@ -68,7 +136,8 @@ void setup(void) {
                     &Core2,      /* Task handle to keep track of created task */
                     1);          /* pin task to core 1 */
   
-  Serial.println("Ready");
+  Serial.print("13,56MHz Reader running on core ");
+  Serial.println(xPortGetCoreID());
 }
 
 
@@ -154,14 +223,18 @@ uint8_t readAndClassifyTarget() {
 }
 
 void hexdump(String preamble, uint8_t *buffer, uint16_t size) {
-  Serial.print(preamble + ": ");
+  Serial.print(preamble + ":");
+  Serial2.print(preamble + ":");
   for (uint16_t i = 0; i < size; i++) {
     if (buffer[i] < 0x10) {
       Serial.print('0');
+      Serial2.print('0');
     }
     Serial.print(buffer[i], HEX);
+    Serial2.print(buffer[i], HEX);
   }
   Serial.println();
+  Serial2.println();
 }
 
 bool emvSelectPPSE(uint8_t *aid) {
@@ -191,7 +264,7 @@ uint8_t readEMVCoPAN() {
     return EMVCO_READ_FAIL;
   }
 
-  hexdump("AID", aid, sizeof(aid));
+  // hexdump("AID", aid, sizeof(aid));
   if (!emvSelectAID(aid, pdol)) {
     return EMVCO_READ_FAIL;
   }
@@ -209,7 +282,7 @@ void loop() {
       Serial.println("Timed out");
       break;
     case RFID_READ_UID:
-      Serial.println("UID read");
+      hexdump("UID", uid, uidLength);
       break;
     case RFID_READ_EMVCO:
       Serial.println("EMVCo capable target");
