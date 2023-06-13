@@ -2,6 +2,7 @@
 #include "../mcu_config.h"
 #include "../utils/debug.h"
 #include "../utils/output.h"
+#include "../utils/beeper.h"
 #include "tlv/parser.h"
 
 #include <Wire.h>
@@ -155,7 +156,19 @@ void OutputHexData(const char* type, const uint8_t *buffer, uint16_t size)
     }
     char result_buffer[4097] = {};
     for (uint16_t i = 0; i < size; i++) {
-        snprintf(result_buffer + i * 2, 3, "%02x", buffer[i]);
+        snprintf(result_buffer + i * 2, 3, "%02X", buffer[i]);
+    }
+    OutputReadID(type, result_buffer);
+}
+
+void OutputPan(const char* type, const uint8_t *buffer, uint16_t size)
+{
+    if (size > 512) {
+        return;
+    }
+    char result_buffer[513] = {};
+    for (uint16_t i = 0; i < size; i++) {
+        snprintf(result_buffer + i, 2, "%c", buffer[i]);
     }
     OutputReadID(type, result_buffer);
 }
@@ -340,13 +353,14 @@ struct PDOLValue
 PDOLValue fixed_values[] = {
     {0x9F59, 3, {0xC8, 0x80, 0x00}},
     {0x9F58, 1, {0x01}},
-    {0x9F66, 4, {0x79, 0x00, 0x40, 0x80}},
+    /* {0x9F66, 4, {0xf9, 0x00, 0x40, 0x80}}, */
     {0x9F40, 4, {0x79, 0x00, 0x40, 0x80}},
     {0x9F02, 6, {0x00, 0x00, 0x00, 0x10, 0x00, 0x00}},
     {0x9F1A, 2, {0x01, 0x24}},
     {0x5F2A, 2, {0x01, 0x24}},
     {0x009A, 3, {0x19, 0x01, 0x01}},
-    {0x9F37, 4, {0x82, 0x3D, 0xDE, 0x7A}}};
+    {0x9F37, 4, {0x82, 0x3D, 0xDE, 0x7A}},
+    {0x9F66, 4, {0xf0, 0x00, 0x00, 0x00}}};
 
 bool EMVGenerateFakePDOL(uint8_t *pdol_in, uint8_t pdol_in_length,
                          uint8_t *pdol_out, uint8_t *pdol_out_length)
@@ -568,7 +582,7 @@ bool EMVGetPanFromAFL(uint8_t *afl, uint8_t afl_length, uint8_t *pan, uint8_t *p
         for (uint8_t j = record_start; j <= record_end; j++) 
         {
             uint8_t record[255];
-            uint8_t record_length;
+            uint8_t record_length = 255;
             if (!EMVReadRecord(sfi, j, record, &record_length)) {
                 continue;
             }
@@ -661,6 +675,9 @@ uint8_t ReadEMVCoPAN(uint8_t* pan, uint8_t* pan_length)
     return EMVCO_READ_OK;
 }
 
+const uint32_t success_beeps[] = {100};
+const uint32_t emv_beeps[] = {0, 50, 75, 50, 75};
+
 void HandleNFC()
 {
     DEBUG_PRINT("NFC started on core %d\n", xPortGetCoreID());
@@ -682,14 +699,21 @@ void HandleNFC()
         case RFID_READ_UID:
             HexDump("UID", uid, uid_length);
             OutputHexData("UID", uid, uid_length);
+            Beep(success_beeps, sizeof(success_beeps) / sizeof(success_beeps[0]));
             break;
         case RFID_READ_EMVCO:
-            OutputHexData("UID", uid, uid_length);
-            DEBUG_PRINT("EMVCo capable target\n");
-            memset(uid, 0, sizeof(uid));
-            if (ReadEMVCoPAN(uid, &uid_length) == EMVCO_READ_OK) {
-                DEBUG_PRINT("Got EMV PAN: %s\n", uid);
-                OutputHexData("PAN", uid, uid_length);
+            StartBeep();
+            uint8_t pan[255];
+            uint8_t pan_length = 255;
+            if (ReadEMVCoPAN(pan, &pan_length) == EMVCO_READ_OK) {
+                DEBUG_PRINT("Got EMV PAN: %s\n", pan);
+                OutputPan("PAN", pan, pan_length);
+                StopBeep();
+                Beep(emv_beeps, 5);
+            } else {
+                DEBUG_PRINT("Failed to EMV\n");
+                OutputHexData("UID", uid, uid_length);
+                StopBeep();
             }
             break;
         }

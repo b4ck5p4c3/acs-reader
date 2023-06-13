@@ -5,5 +5,6 @@ void InitOutput() {
 }
 
 void OutputReadID(const char* type, const char* data) {
-    OUTPUT_SERIAL.printf("%s %s\n", type, data);
+    OUTPUT_SERIAL.printf("%s:%s\n", type, data);
+    OUTPUT_SERIAL.flush(true);
 }

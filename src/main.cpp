@@ -6,6 +6,8 @@
 #include "nfc/handler.h"
 #include "esp_wifi.h"
 #include "arduino_ota.h"
+#include "utils/beeper.h"
+#include "utils/output.h"
 
 TaskHandle_t _125khz_task;
 TaskHandle_t nfc_task;
@@ -30,17 +32,25 @@ void StartNFC() {
       1, &_125khz_task, 0);        
 }
 
-void setup()
-{
+const uint32_t kStartupBeeps[] = {200, 100, 200};
+
+void StartupBeepTask(void*) {
+  
+}
+
+void setup() {
   InitDebug();
-  Init125KHz();
+  // Init125KHz();
   InitNFC();
   InitWiFi();
   InitArduinoOTA();
+  InitBeeper();
+  InitOutput();
 
   // StartWiFi();
 
-  Start125KHz();
+  // Start125KHz();
+  Beep(kStartupBeeps, sizeof(kStartupBeeps) / sizeof(kStartupBeeps[0]));
   StartNFC();
 }
 
