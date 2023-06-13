@@ -1,6 +1,6 @@
 # acs-reader
 
-B4CKSP4CE ACS NFC/EMV/RFID reader based on ESP32(S2), PN532, RDM6300
+B4CKSP4CE ACS NFC/EMV/RFID reader based on ESP32(S2), PN532 and RDM6300
 
 Allows to:
 - Read UIDs from NFC tags
