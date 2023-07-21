@@ -1579,7 +1579,6 @@ void Adafruit_PN532::readdata(uint8_t *buff, uint8_t n) {
     // Discard the leading 0x01
     i2c_recv();
     for (uint8_t i = 0; i < n; i++) {
-      delay(1);
       buff[i] = i2c_recv();
 #ifdef PN532DEBUG
       PN532DEBUGPRINT.print(F(" 0x"));

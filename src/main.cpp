@@ -29,7 +29,7 @@ void Start125KHz() {
 void StartNFC() {
   xTaskCreatePinnedToCore(MainNFCTask, 
       "nfc_task", 10000, nullptr,      
-      1, &_125khz_task, 0);        
+      5, &_125khz_task, 0);        
 }
 
 const uint32_t kStartupBeeps[] = {200, 100, 200};
