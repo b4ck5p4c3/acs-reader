@@ -38,8 +38,44 @@ void StartupBeepTask(void*) {
   
 }
 
+#include "nfc/interface/pn532.h"
+
+#include <memory>
+
 void setup() {
   InitDebug();
+
+  std::unique_ptr<NFCInterface> interface(new PN532(Wire, PN532_SCL, PN532_SDA, PN532_IRQ, PN532_RST));
+  DEBUG_PRINT("Init: %d\n", interface->Init());
+
+  while (true) {
+    NFCTagInfo info;
+    if (interface->FindTag(info, 10000)) {
+      DEBUG_PRINT("Read tag: %04x %02x\nUID: ", info.atqa, info.sak);
+      for (const auto byte : info.uid) {
+        DEBUG_PRINT("%02x ", byte);
+      }
+      DEBUG_PRINT("\nATS: ");
+      for (const auto byte : info.ats) {
+        DEBUG_PRINT("%02x ", byte);
+      }
+      DEBUG_PRINT("\n");
+      std::vector<uint8_t> data;
+      if (interface->ApduExchange({ 0x00, 0xA4, 0x04, 0x00, 0x0e, 0x32, 0x50, 0x41, 0x59, 0x2e, 0x53, 0x59, 0x53, 0x2e, 0x44, 0x44, 0x46, 0x30, 0x31, 0x00 }, data, 1000)) {
+        DEBUG_PRINT("APDU response: ");
+        for (const auto byte : data) {
+          DEBUG_PRINT("%02x ", byte);
+        }
+        DEBUG_PRINT("\n");
+      } else {
+        DEBUG_PRINT("APDU failed\n");
+      }
+    } else {
+      DEBUG_PRINT("Failed to read\n");
+    }
+  }
+
+  return;
   // Init125KHz();
   InitNFC();
   InitWiFi();

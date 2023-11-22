@@ -35,6 +35,9 @@ void InitNFC()
 {
     Wire.setPins(PN532_SDA, PN532_SCL);
     nfc.begin();
+    DEBUG_PRINT("Version: %d\n", nfc.getFirmwareVersion());
+    nfc.waitready(1000);
+    DEBUG_PRINT("Version: %d\n", nfc.getFirmwareVersion());
 
     if (!nfc.getFirmwareVersion())
     {
