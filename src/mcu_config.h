@@ -8,9 +8,9 @@
 
 // PN532 pins
 #define PN532_IRQ 32
-#define PN532_RST 33 // Must be connected to RSTPDN pin, not RSTO!
-#define PN532_SDA 21 // 3
-#define PN532_SCL 22 // 2
+#define PN532_RST 33  // Must be connected to RSTPDN pin, not RSTO!
+#define PN532_SDA 21  // 3
+#define PN532_SCL 22  // 2
 
 // RDM6300 pins
 #define RDM6300_SERIAL Serial1
@@ -24,8 +24,8 @@
 #define OUTPUT_SERIAL_SPEED 115200
 
 // Beeper
-#define BEEPER_GND 27 // 16
-#define BEEPER_VCC 26 // 35
+#define BEEPER_GND 27  // 16
+#define BEEPER_VCC 26  // 35
 
 // WiFi
 #define WIFI_SSID "B4CK"
