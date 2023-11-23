@@ -2,26 +2,29 @@
 #define TLV_PARSER_TLV_PARSER_H_
 
 #include <cstdint>
+#include <vector>
 
-class Parser
-{
-public:
-  Parser(const uint8_t *data, uint32_t size) : data_(data), size_(size)
-  {
-  }
+class Parser {
+    public:
+        Parser(const std::vector<uint8_t>& data, bool is_null = false) : data_(data), is_null_(is_null) {
+        }
 
-  Parser GetObject(uint32_t tag) const;
-  const uint8_t *GetData() const;
-  uint32_t GetLength() const;
+        Parser(const Parser& other) = default;
+        Parser(Parser&& other) = default;
+        Parser& operator=(const Parser& other) = default;
+        Parser& operator=(Parser&& other) = default;
 
-  bool IsNull() const;
+        Parser GetObject(uint32_t tag) const;
+        const std::vector<uint8_t>& GetData() const;
 
-private:
-  const uint8_t *data_;
-  uint32_t size_;
+        bool IsNull() const;
 
-  uint32_t ParseTag(uint32_t *position) const;
-  uint32_t ParseLength(uint32_t *position) const;
+    private:
+        std::vector<uint8_t> data_;
+        bool is_null_;
+
+        uint32_t ParseTag(uint32_t& position) const;
+        uint32_t ParseLength(uint32_t& position) const;
 };
 
 #endif // TLV_PARSER_TLV_PARSER_H_

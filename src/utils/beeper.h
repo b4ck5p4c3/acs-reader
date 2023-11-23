@@ -1,11 +1,11 @@
 #ifndef UTILS_BEEPER_H_
 #define UTILS_BEEPER_H_
 
-#include <Arduino.h>
 #include <cstdint>
+#include <vector>
 
 void InitBeeper();
-void Beep(const uint32_t* time, uint8_t count);
+void Beep(const std::vector<uint32_t>& times);
 void StartBeep();
 void StopBeep();
 

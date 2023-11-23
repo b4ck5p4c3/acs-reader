@@ -10,12 +10,12 @@ void InitBeeper() {
     digitalWrite(BEEPER_VCC, HIGH);
 }
 
-void Beep(const uint32_t* time, uint8_t count) {
+void Beep(const std::vector<uint32_t>& times) {
     uint8_t state = HIGH;
-    for (uint8_t i = 0; i < count; i++) {
+    for (auto period : times) {
         state = !state;
         digitalWrite(BEEPER_GND, state);
-        delay(time[i]);
+        delay(period);
     }
     digitalWrite(BEEPER_GND, HIGH);
 }

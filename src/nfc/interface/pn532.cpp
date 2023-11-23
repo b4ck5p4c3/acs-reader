@@ -58,8 +58,8 @@ bool PN532::FindTag(NFCTagInfo& info, uint32_t timeout) {
     if (answer[1] != 1) {
         return false;
     }
-    info.atqa = (answer[2] << 8ul) | answer[3];
-    info.sak = answer[4];
+    info.atqa = (answer[3] << 8ul) | answer[4];
+    info.sak = answer[5];
     uint8_t uid_length = answer[6];
     if (answer.size() < (uid_length + 7)) {
         return false;
@@ -92,6 +92,7 @@ bool PN532::ApduExchange(const std::vector<uint8_t>& in_data, std::vector<uint8_
         return false;
     }
     if ((answer[1] & 0x3F) != 0) {
+        DEBUG_PRINT("Failed to APDU: %02x\n", answer[1] & 0x3F);
         return false;
     }
     out_data.clear();
