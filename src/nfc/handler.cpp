@@ -27,9 +27,9 @@ void InitNFC() {
   }
 }
 
-uint8_t ReadAndClassifyTarget(std::vector<uint8_t> uid) {
+uint8_t ReadAndClassifyTarget(std::vector<uint8_t>& uid) {
   NFCTagInfo info;
-  if (!nfc.FindTag(info, 10000)) {
+  if (!nfc.FindTag(info, 1000)) {
     return RFID_READ_TIMED_OUT;
   }
 
@@ -492,6 +492,8 @@ std::vector<uint32_t> emv_beeps{0, 50, 75, 50, 75};
 void HandleNFC() {
   DEBUG_PRINT("NFC started on core %d\n", xPortGetCoreID());
 
+  std::vector<uint8_t> old_uid;
+
   for (;;) {
     std::vector<uint8_t> uid;
     uint8_t read_status = ReadAndClassifyTarget(uid);
@@ -499,16 +501,22 @@ void HandleNFC() {
     switch (read_status) {
       case RFID_READ_NO_TAG:
         DEBUG_PRINT("No tag\n");
+        old_uid.clear();
         break;
       case RFID_READ_TIMED_OUT:
         DEBUG_PRINT("Timed out\n");
+        old_uid.clear();
         break;
       case RFID_READ_UID:
+      case RFID_READ_EMVCO:
+        if (uid == old_uid) {
+          continue;
+        }
+        old_uid = uid;
+
         HexDump("UID", uid);
         OutputHexData("UID", uid);
-        Beep(success_beeps);
-        break;
-      case RFID_READ_EMVCO:
+
         StartBeep();
         std::vector<uint8_t> pan;
         pan.reserve(22);
@@ -518,12 +526,10 @@ void HandleNFC() {
           Beep(emv_beeps);
         } else {
           DEBUG_PRINT("Failed to EMV\n");
-          OutputHexData("UID", uid);
           StopBeep();
+          old_uid.clear();
         }
         break;
     }
-
-    // TODO throttle
   }
 }
