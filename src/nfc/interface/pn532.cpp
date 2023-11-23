@@ -5,7 +5,7 @@
 
 #include <numeric>
 
-const uint8_t kPN532Ack[] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
+std::vector<uint8_t> kPN532Ack{0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
 
 bool PN532::Init() {
   pinMode(this->rst_pin_, OUTPUT);
@@ -153,19 +153,18 @@ bool PN532::ReadAck(uint32_t timeout) {
     return false;
   }
 
-  this->wire_.requestFrom(PN532_I2C_ADDRESS, 1 + sizeof(kPN532Ack), true);
+  this->wire_.requestFrom(PN532_I2C_ADDRESS, 1 + kPN532Ack.size(), true);
 
   if (!this->ReadRdy()) {
     return false;
   }
 
-  std::vector<uint8_t> ack_buffer(sizeof(kPN532Ack));
+  std::vector<uint8_t> ack_buffer(kPN532Ack.size());
   if (this->wire_.readBytes(ack_buffer.data(), ack_buffer.size()) !=
       ack_buffer.size()) {
     return false;
   }
-  if (!std::equal(kPN532Ack, kPN532Ack + sizeof(kPN532Ack),
-                  ack_buffer.begin())) {
+  if (ack_buffer != kPN532Ack) {
     return false;
   }
   return true;

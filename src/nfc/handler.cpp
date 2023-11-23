@@ -157,7 +157,7 @@ struct PANPath {
   std::vector<uint16_t> tags;
 };
 
-std::vector<PANPath> pan_paths{
+std::vector<PANPath> kPanPaths{
     {{0x77, 0x57}},
     {{0x6F, 0xA5, 0xBF61, 0x57}},
     {{0x6F, 0xA5, 0xBF62, 0x57}},
@@ -188,7 +188,7 @@ bool EMVGetPanFromData(const std::vector<uint8_t>& data,
     return false;
   }
 
-  for (const auto& path : pan_paths) {
+  for (const auto& path : kPanPaths) {
     Parser current_parser = tlv_parser;
     DEBUG_PRINT("Testing path on %d\n", tlv_parser.GetData().size());
     for (auto tag : path.tags) {
@@ -290,7 +290,7 @@ struct PDOLValue {
 };
 
 // source: https://github.com/flipperdevices/flipperzero-firmware/blob/dev/lib/nfc/protocols/emv.c
-std::vector<PDOLValue> fixed_values{
+std::vector<PDOLValue> kFixedPdolValues{
     {0x9F59, {0xC8, 0x80, 0x00}},
     {0x9F58, {0x01}},
     /* {0x9F66, 4, {0xf9, 0x00, 0x40, 0x80}}, */
@@ -319,7 +319,7 @@ bool EMVGenerateFakePDOL(const std::vector<uint8_t>& pdol_in,
     }
 
     bool found = false;
-    for (const auto& fixed_value : fixed_values) {
+    for (const auto& fixed_value : kFixedPdolValues) {
       if (fixed_value.tag == tag && fixed_value.data.size() == length) {
         found = true;
         DEBUG_PRINT("Found tag %04x with length %d\n", tag, length);
@@ -486,8 +486,8 @@ uint8_t ReadEMVCoPAN(std::vector<uint8_t>& pan) {
   return EMVCO_READ_OK;
 }
 
-std::vector<uint32_t> success_beeps{100};
-std::vector<uint32_t> emv_beeps{0, 50, 75, 50, 75};
+std::vector<uint32_t> kSuccessBeeps{100};
+std::vector<uint32_t> kEmvBeeps{0, 50, 75, 50, 75};
 
 void HandleNFC() {
   DEBUG_PRINT("NFC started on core %d\n", xPortGetCoreID());
@@ -523,7 +523,7 @@ void HandleNFC() {
         if (ReadEMVCoPAN(pan) == EMVCO_READ_OK) {
           OutputPan("PAN", pan);
           StopBeep();
-          Beep(emv_beeps);
+          Beep(kEmvBeeps);
         } else {
           DEBUG_PRINT("Failed to EMV\n");
           StopBeep();
