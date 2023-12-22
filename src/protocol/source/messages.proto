@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+message Rfid125KHzUidRecievedNotify {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 7;
+    }
+
+    string uid = 1;
+}
+
+message NfcUIDRecievedNotify {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 8;
+    }
+
+    string uid = 1;
+}
+
+message PANRecievedNotify {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 9;
+    }
+
+    string pan = 1;
+}
+
+message AppleTransactionRequest {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 10;
+    }
+}
+
+message AppleTransactionResponse {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 11;
+    }
+
+    bytes reader_id = 1;
+    bytes transaction_id = 2;
+    bytes reader_ephemeral_public_key = 3;
+}
+
+message AppleCryptogramVerifyRequest {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 12;
+    }
+
+    bytes reader_ephemeral_public_key = 1;
+    bytes endpoint_ephemeral_public_key = 2;
+    bytes cryptogram = 3;
+}
+
+message AppleCryptogramVerifyResponse {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 13;
+    }
+
+    bool success = 1;
+    bytes signature = 2;
+}
+
+message AppleStandardAuthVerifyRequest {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 14;
+    }
+
+    bytes encrypted_response = 1;
+}
+
+message AppleStandardAuthVerifyResponse {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 15;
+    }
+
+    bool requires_exchange = 1;
+}
+
+message AppleAttestationExchangeRequest {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 16;
+    }
+
+    bytes attestation_exchange_data = 1;
+}
+
+message AppleAttestationExchangeResponse {
+    enum PacketInfo {
+        NONE = 0;
+        PACKET_ID = 17;
+    }
+
+    bool success = 1;
+}

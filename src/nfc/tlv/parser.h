@@ -1,5 +1,5 @@
-#ifndef TLV_PARSER_TLV_PARSER_H_
-#define TLV_PARSER_TLV_PARSER_H_
+#ifndef NFC_TLV_PARSER_H_
+#define NFC_TLV_PARSER_H_
 
 #include <cstdint>
 #include <vector>
@@ -27,4 +27,4 @@ class Parser {
   uint32_t ParseLength(uint32_t& position) const;
 };
 
-#endif  // TLV_PARSER_TLV_PARSER_H_
+#endif  // NFC_TLV_PARSER_H_

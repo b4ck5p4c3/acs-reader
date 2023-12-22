@@ -2,6 +2,7 @@
 #define UTILS_DEBUG_H_
 
 #include <Arduino.h>
+#include <vector>
 
 #include "../mcu_config.h"
 
@@ -12,5 +13,6 @@
 #endif
 
 void InitDebug();
+void HexDump(const char* preamble, const std::vector<uint8_t>& data);
 
-#endif
+#endif  // UTILS_DEBUG_H_

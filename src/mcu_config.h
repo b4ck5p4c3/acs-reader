@@ -20,7 +20,7 @@
 #define DEBUG_SERIAL Serial
 
 // Output serial
-#define OUTPUT_SERIAL Serial1
+#define OUTPUT_SERIAL Serial2
 #define OUTPUT_SERIAL_SPEED 115200
 
 // Beeper
@@ -36,4 +36,4 @@
 #define OTA_PASSWORD SECRET_OTA_PASSWORD
 #define OTA_PORT 3232
 
-#endif
+#endif  // MCU_CONFIG_H_

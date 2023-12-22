@@ -41,4 +41,4 @@ class PN532 : public NFCInterface {
   uint32_t rst_pin_;
 };
 
-#endif
+#endif  // NFC_INTERFACE_PN532_H_

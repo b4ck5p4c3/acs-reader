@@ -14,3 +14,8 @@ To build the project you also require to create `src/secrets.h` with defines for
 ```
 
 Also probably you need to change the `WIFI_SSID` and `OTA_HOSTNAME` defines in `src/mcu_config.h` for your specific environment.
+
+If you need to add or edit protocol messages you should run setup.py in `EmbeddedProto` directory and run:
+```bash
+protoc --plugin=protoc-gen-eams=EmbeddedProto/protoc-gen-eams -I=src/protocol/source/ --eams_out=src/protocol/compiled/ src/protocol/source/messages.proto
+```

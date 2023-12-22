@@ -28,4 +28,4 @@ class NFCInterface {
   NFCInterface() = default;
 };
 
-#endif
+#endif  // NFC_INTERFACE_INTERFACE_H_

@@ -1,29 +1,28 @@
 #include "beeper.h"
 
 #include <Arduino.h>
-#include "../mcu_config.h"
 
-void InitBeeper() {
-  pinMode(BEEPER_GND, OUTPUT_OPEN_DRAIN);
-  pinMode(BEEPER_VCC, OUTPUT);
-  digitalWrite(BEEPER_GND, HIGH);
-  digitalWrite(BEEPER_VCC, HIGH);
+void Beeper::Init() {
+  pinMode(this->gnd_pin_, OUTPUT_OPEN_DRAIN);
+  pinMode(this->vcc_pin_, OUTPUT);
+  digitalWrite(this->gnd_pin_, HIGH);
+  digitalWrite(this->vcc_pin_, HIGH);
 }
 
-void Beep(const std::vector<uint32_t>& times) {
+void Beeper::Beep(const std::vector<uint32_t>& times) {
   uint8_t state = HIGH;
   for (auto period : times) {
     state = !state;
-    digitalWrite(BEEPER_GND, state);
+    digitalWrite(this->gnd_pin_, state);
     delay(period);
   }
-  digitalWrite(BEEPER_GND, HIGH);
+  digitalWrite(this->gnd_pin_, HIGH);
 }
 
-void StartBeep() {
-  digitalWrite(BEEPER_GND, LOW);
+void Beeper::StartBeep() {
+  digitalWrite(this->gnd_pin_, LOW);
 }
 
-void StopBeep() {
-  digitalWrite(BEEPER_GND, HIGH);
+void Beeper::StopBeep() {
+  digitalWrite(this->gnd_pin_, HIGH);
 }

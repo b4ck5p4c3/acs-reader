@@ -5,7 +5,7 @@
 
 #include <numeric>
 
-std::vector<uint8_t> kPN532Ack{0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
+const std::vector<uint8_t> kPN532Ack{0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
 
 bool PN532::Init() {
   pinMode(this->rst_pin_, OUTPUT);
@@ -132,7 +132,7 @@ bool PN532::SendCommandData(const std::vector<uint8_t>& data) {
 
   command_data.push_back(~checksum + 1);
   command_data.push_back(PN532_POSTAMBLE);
-
+  
   this->wire_.beginTransmission(PN532_I2C_ADDRESS);
   if (this->wire_.write(command_data.data(), command_data.size()) !=
       command_data.size()) {
